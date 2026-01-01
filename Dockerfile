@@ -6,18 +6,18 @@ RUN apt update && \
     curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
       -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
 
-# Cloudflare Tunnel
+# Cloudflare tunnel (show link)
 RUN printf '#!/bin/sh\n\
-echo "[+] Cloudflare Tunnel Starting..."\n\
+echo "[+} Cloudflare Tunnel starting..."\n\
 cloudflared tunnel --url http://localhost:8006 --no-autoupdate --protocol http2 &\n\
 ' > /tunnel.sh && chmod +x /tunnel.sh
 
-# Keepalive Web Port 8080
+# Keep Railway alive on port 8080
 RUN printf '#!/bin/sh\n\
-while true; do echo "Railway Alive" | nc -l -p 8080; done\n' \
+while true; do echo \"Windows đang chạy trên Railway\" | nc -l -p 8080; done\n' \
 > /alive.sh && chmod +x /alive.sh
 
-# cấu hình Windows VM
+# cấu hình Windows
 ENV USERNAME="Code-chillmusic"
 ENV PASSWORD="admin123"
 ENV VERSION="10"
@@ -28,8 +28,8 @@ ENV SCREEN_RESOLUTION="1280x720"
 EXPOSE 8080
 EXPOSE 8006
 
-# 🚀 ĐÂY LÀ DÒNG QUAN TRỌNG NHẤT (FIX TINI)
+# ❗Không override ENTRYPOINT nữa → Windows tự boot
 ENTRYPOINT ["/usr/bin/tini","--"]
 
-# 🚀 BOOT CHUẨN (không còn lỗi -c)
-CMD ["sh","-c","sh /tunnel.sh & sh /alive.sh & /run.sh"]
+# ❗Không gọi /run.sh nữa → vì nó không tồn tại
+CMD sh /tunnel.sh & sh /alive.sh & tail -f /dev/null
