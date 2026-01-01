@@ -1,6 +1,6 @@
 # =========================================
 # WINDOWS + CLOUDFLARE TUNNEL (NO LOGIN)
-# RAILWAY DEPLOY 1 FILE - FINAL FIX
+# RAILWAY FRIENDLY - SHOW LOGS
 # =========================================
 FROM dockurr/windows:latest
 
@@ -10,15 +10,19 @@ RUN apt update && \
     curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
       -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
 
-# Cloudflare Tunnel script
-RUN printf '#!/bin/bash\ncloudflared tunnel --url http://localhost:8006 --no-autoupdate --protocol http2 2>&1 | grep -Eo "https://[a-zA-Z0-9.-]*\\.trycloudflare\\.com"\n' \
-      > /run-tunnel.sh && chmod +x /run-tunnel.sh
+# Tạo script start
+RUN printf '#!/bin/bash\n\
+echo "---------------------------------------"\n\
+echo " 🚀 Khởi động Windows + Cloudflare Tunnel"\n\
+echo "---------------------------------------"\n\
+echo "[+] Đang tạo link cloudflare..."\n\
+( cloudflared tunnel --url http://localhost:8006 --no-autoupdate --protocol http2 2>&1 | grep -Eo "https://[a-zA-Z0-9.-]*\\.trycloudflare\\.com" ) &\n\
+echo "[+] Khởi động web keepalive Railway (port 8080)"\n\
+( while true; do echo "<h1>Windows đang chạy trên Railway...</h1>" | nc -l -p 8080; done ) &\n\
+echo "[+] Booting Windows VM..."\n\
+exec /run\n' > /start.sh && chmod +x /start.sh
 
-# Railway keepalive web port 8080
-RUN printf '#!/bin/bash\nwhile true; do echo "<h1>Windows đang chạy trên Railway...</h1>" | nc -l -p 8080; done\n' \
-      > /keepalive.sh && chmod +x /keepalive.sh
-
-# Windows VM config
+# Cấu hình Windows VM
 ENV USERNAME="Code-chillmusic"
 ENV PASSWORD="admin123"
 ENV VERSION="10"
@@ -30,4 +34,4 @@ EXPOSE 8080
 EXPOSE 8006
 
 ENTRYPOINT ["/usr/bin/tini","--"]
-CMD /run-tunnel.sh & /keepalive.sh & exec /run
+CMD ["/start.sh"]
