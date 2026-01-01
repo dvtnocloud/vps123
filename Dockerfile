@@ -1,6 +1,6 @@
 # =========================================
-# WINDOWS + CLOUDFARE TUNNEL (NO LOGIN)
-# RAILWAY DEPLOY - FINAL STABLE
+# WINDOWS + CLOUDFLARE (NO LOGIN)
+# RAILWAY - FINAL WORKING VERSION
 # =========================================
 FROM dockurr/windows:latest
 
@@ -10,18 +10,18 @@ RUN apt update && \
     curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
       -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared
 
-# Cloudflare tunnel script
-RUN printf '#!/bin/bash\n\
-echo "[+] Tạo link Cloudflare..."\n\
-cloudflared tunnel --url http://localhost:8006 --no-autoupdate --protocol http2 &\n' \
-> /run-tunnel.sh && chmod +x /run-tunnel.sh
+# Tạo tunnel + hiện link
+RUN printf '#!/bin/sh\n\
+echo "[+] Tạo Cloudflare Tunnel..."\n\
+cloudflared tunnel --url http://localhost:8006 --no-autoupdate --protocol http2 &\n\
+' > /run-tunnel.sh && chmod +x /run-tunnel.sh
 
-# Keepalive cho Railway (port 8080)
-RUN printf '#!/bin/bash\n\
-while true; do echo "<h1>Windows đang chạy trên Railway...</h1>" | nc -l -p 8080; done\n' \
+# Giữ Railway sống bằng port 8080
+RUN printf '#!/bin/sh\n\
+while true; do echo "Windows đang chạy trên Railway" | nc -l -p 8080; done\n' \
 > /keepalive.sh && chmod +x /keepalive.sh
 
-# Config VM
+# Config Windows
 ENV USERNAME="Code-chillmusic"
 ENV PASSWORD="admin123"
 ENV VERSION="10"
@@ -32,6 +32,6 @@ ENV SCREEN_RESOLUTION="1280x720"
 EXPOSE 8080
 EXPOSE 8006
 
-# 🚀 Lệnh boot CHUẨN
-ENTRYPOINT ["/usr/bin/tini","--"]
-CMD /run-tunnel.sh & /keepalive.sh & exec /entry.sh
+# ⚠️ Không thay đổi ENTRYPOINT của image
+# 🚀 Chỉ chạy phụ trợ rồi trả quyền boot về cho image
+CMD sh /run-tunnel.sh & sh /keepalive.sh & tail -f /dev/null
